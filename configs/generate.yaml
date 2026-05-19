@@ -5,22 +5,23 @@ defaults:
   - paths: default
 
 # Seed for random number generators
-seed: 42
-
-load_path: checkpoints/ipsl_tas_rcp85_4.pt
+seed: 0
+samples_per: 1
+load_path: ipsl_tas_dcpp_4.pt
 esm: IPSL
-scenario: rcp85
-gen_mode: gen  # Either gen/val/test
-batch_size: 8
+scenario: dcpp
+gen_mode: val  # Either gen/val/test
+batch_size: 1
 sample_steps: 250
-start_year: 2080
-end_year: 2100
-variable: tas   # Only works with a single variable, for now
+start_year: 1961
+end_year: 1971
+variables: [tas,pr]   
 save_name: null  # Only set a save name if you want something special added to your save path
+# spatial_resolution: null
 
 dataset:
   _target_: data.climate_dataset.ClimateDataset
-  seq_len: 28
+  seq_len: 120
 
 accelerator:
   mixed_precision: fp16

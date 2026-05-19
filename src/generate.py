@@ -24,7 +24,7 @@ Checkpoint = dict[str, Union[int, OrderedDict]]
 
 # Assumes that gen is conditioned on val, and the first realization
 # is always reserved for the test set
-realization_dict = {"gen": "r2", "val": "r2", "test": "r1"}
+realization_dict = {"gen": "r3", "val": "r3", "test": "r3"}
 
 
 def get_starting_index(directory: str) -> int:
@@ -119,7 +119,6 @@ def main(config: DictConfig) -> None:
         data_dir=config.paths.data_dir,
         realizations=[realization_dict[config.gen_mode]],
         vars=config.variables,
-        spatial_resolution=config.spatial_resolution
     )
     scheduler: DDPMScheduler = instantiate(config.scheduler)
     scheduler.set_timesteps(config.sample_steps)
@@ -134,7 +133,7 @@ def main(config: DictConfig) -> None:
 
     # Grab the Xarray dataset from the dataset object
     xr_ds = dataset.xr_data.load()
-
+    print(xr_ds)
     # Restrict days to the first 28 days of each month and select years
     xr_ds = xr_ds.sel(time=xr_ds.time.dt.day.isin(range(1, 29)))
     xr_ds = xr_ds.sel(time=slice(str(config.start_year), str(config.end_year)))

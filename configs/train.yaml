@@ -7,7 +7,7 @@ defaults:
   - paths: default
 
 # Seed for random number generators
-seed: 50
+seed: 0
 
 wandb:
   project: diffesm
@@ -16,4 +16,4 @@ wandb:
   name: null
   init_kwargs:
     name: test
-    mode: online
+    mode: offline

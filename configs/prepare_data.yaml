@@ -4,9 +4,9 @@ defaults:
 
 
 esm: IPSL         # The ESM you want to process
-scenario: rcp85   # The scenario you want to process
+scenario: dcpp   # The scenario you want to process
 num_chunks: 40    # How many chunks to split each realization into
                   # make this number as many cores as you have available
 
-start_year: 1850  # Start year of the training data
-end_year: 2100    # End year of the training data
+start_year: 1961  # Start year of the training data
+end_year: 2016    # End year of the training data

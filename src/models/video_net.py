@@ -6,7 +6,7 @@ import torch.nn as nn
 from einops_exts import rearrange_many
 from einops import rearrange
 
-
+import torch.nn.functional as F
 from torch.utils import checkpoint as torch_checkpoint
 
 from models.rotary_embedding import RotaryEmbedding
@@ -781,6 +781,14 @@ class UNetModel3D(nn.Module):
         :param y: an [N] Tensor of labels, if class-conditional.
         :return: an [N x C x ...] Tensor of outputs.
         """
+        # Calculate padding needed to make H and W even/divisible
+        # This pads 143 to 144
+        pad_h = x.shape[-2] % 2
+        pad_w = x.shape[-1] % 2
+        
+        if pad_h > 0 or pad_w > 0:
+            x = F.pad(x, (0, pad_w, 0, pad_h)) # Padding (left, right, top, bottom)
+            
         # 1. time
         if not torch.is_tensor(timesteps):
             timesteps = torch.tensor([timesteps], dtype=torch.long, device=x.device)
@@ -806,6 +814,11 @@ class UNetModel3D(nn.Module):
 
         # If a conditioning map is passed in, concat it to noisy input
         if exists(cond_map):
+            if x.shape[-2:] != cond_map.shape[-2:]:
+                # Option A: Pad cond_map to match x (if x is 144 and cond_map is 143)
+                diff_h = x.shape[-2] - cond_map.shape[-2]
+                diff_w = x.shape[-1] - cond_map.shape[-1]
+                cond_map = F.pad(cond_map, (0, diff_w, 0, diff_h))
             x = torch.cat([x, cond_map], dim=1)
 
         if exists(lowres_cond):
@@ -851,7 +864,8 @@ class UNetModel3D(nn.Module):
             x, pos_bias=time_rel_pos_bias, focus_present_mask=focus_present_mask
         )
         x = self.mid_block2(x, t)
-
+        # print(x.shape)
+        # print(h[0].shape)
         for block1, block2, spatial_attn, temporal_attn, upsample in self.ups:
             # Concatenate residual connections to x
             x = torch.cat((x, h.pop()), dim=1)
@@ -868,4 +882,6 @@ class UNetModel3D(nn.Module):
         x = torch.cat((x, r), dim=1)
 
         out = self.out_conv(x)
+        if pad_h > 0 or pad_w > 0:
+            out = out[..., :out.shape[-2]-pad_h, :out.shape[-1]-pad_w]
         return out

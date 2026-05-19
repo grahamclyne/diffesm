@@ -3,13 +3,13 @@
 root_dir: .
 
 # Path to directory where processed netCDF4 files are stored
-data_dir: /dummy/path/to/prepared_data
+data_dir: /lustre/fsn1/projects/rech/mlr/udy16au/dcpp_dataset
 
 # Path to where the JSON files describing the data are stored
-json_data_dir: /dummy/path/to/json
+json_data_dir: /lustre/fswork/projects/rech/mlr/udy16au/diffesm/configs/data/
 
 # Path to where our generated samples will be saved
-save_dir: /dummy/path/to/where/samples_are_saved
+save_dir: /lustre/fsn1/projects/rech/mlr/udy16au/generated_data
 
 # Path to where our quantiles will be saved to and accessed
-quantile_dir: /dummy/path/to/quantiles
+quantile_dir: /lustre/fsn1/projects/rech/mlr/udy16au/generated_data

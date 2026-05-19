@@ -11,7 +11,7 @@ from accelerate import Accelerator
 import dask
 
 # Constants for the minimum and maximum of our datasets
-MIN_MAX_CONSTANTS = {"tas": (-85.0, 60.0), "pr": (0.0, 6.0)}
+# MIN_MAX_CONSTANTS = {"tas": (-85.0, 60.0), "pr": (0.0, 6.0)}
 
 # Convert from kelvin to celsius and from kg/m^2/s to mm/day
 PREPROCESS_FN = {"tas": lambda x: x - 273.15, "pr": lambda x: x * 86400}
@@ -54,7 +54,7 @@ def normalize(ds: xr.DataArray) -> xr.DataArray:
     norm = NORM_FN[ds.name](ds)
 
     # Then apply min-max normalization
-    min_val, max_val = MIN_MAX_CONSTANTS[ds.name]
+    # min_val, max_val = MIN_MAX_CONSTANTS[ds.name]
     # norm = min_max_norm(norm, min_val, max_val)
     return norm
 
@@ -62,7 +62,7 @@ def normalize(ds: xr.DataArray) -> xr.DataArray:
 def denorm(ds: xr.DataArray) -> xr.DataArray:
     norm = DENORM_FN[ds.name](ds)
 
-    min_val, max_val = MIN_MAX_CONSTANTS[ds.name]
+    # min_val, max_val = MIN_MAX_CONSTANTS[ds.name]
     # norm = min_max_denorm(norm, min_val, max_val)
     return norm
 
@@ -76,11 +76,10 @@ class ClimateDataset(Dataset):
         data_dir: str,
         scenario: str,
         vars: list[str],
-        spatial_resolution=None,
     ):
         self.seq_len = seq_len
         self.realizations = realizations
-        self.spatial_resolution = spatial_resolution
+        # self.spatial_resolution = spatial_resolution
 
         self.data_dir = os.path.join(data_dir, esm, scenario)
 
@@ -103,7 +102,7 @@ class ClimateDataset(Dataset):
         """Loads the data from the specified paths and returns it as an xarray Dataset."""
 
         realization_dir = os.path.join(self.data_dir, realization, "*.nc")
-
+        print(realization_dir)
         # Open up the dataset and make sure it's sorted by time
         dataset = xr.open_mfdataset(realization_dir, combine="by_coords").sortby("time")
 
@@ -113,9 +112,9 @@ class ClimateDataset(Dataset):
         # Apply preprocessing and normalization
         self.xr_data = dataset.map(preprocess).map(normalize)
 
-        if self.spatial_resolution is not None:
-            with dask.config.set(**{'array.slicing.split_large_chunks' : False}):
-                self.xr_data = self.xr_data.coarsen(lon=3, lat=2).mean()
+        # if self.spatial_resolution is not None:
+        #     with dask.config.set(**{'array.slicing.split_large_chunks' : False}):
+        #         self.xr_data = self.xr_data.coarsen(lon=3, lat=2).mean()
 
         self.tensor_data = self.convert_xarray_to_tensor(self.xr_data)
 

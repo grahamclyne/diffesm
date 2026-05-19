@@ -27,13 +27,13 @@ def calc_mse_loss(model_output, target):
 
     # Weight the equator more heavily than the poles
     latitude = torch.linspace(
-        -80, 80, spatial_loss.shape[-2], device=spatial_loss.device
+        -90, 90, spatial_loss.shape[-2], device=spatial_loss.device
     )
     latitude_rad = torch.deg2rad(latitude)
     latitude_weight = torch.cos(latitude_rad)
 
     # Weight the loss
-    lat_weighted_loss = (spatial_loss * latitude_weight).mean()
+    lat_weighted_loss = (spatial_loss * latitude_weight[:,None]).mean()
 
     return lat_weighted_loss
 
@@ -168,7 +168,7 @@ class UNetTrainer:
                     continue
 
                 loss = self.get_loss(batch)
-
+                
                 # Check if the accelerator has performed an optimization step
                 if self.accelerator.sync_gradients:
                     # Update counts
@@ -195,13 +195,29 @@ class UNetTrainer:
             progress_bar.close()
 
     def get_original_sample(self, noisy_sample, model_output, timesteps):
-        
-        alpha_prod_t = self.scheduler.alphas_cumprod[timesteps].view(-1, 1, 1, 1, 1)
-        beta_prod_t = 1 - alpha_prod_t
+        if isinstance(self.scheduler, ContinuousDDPM):
 
-        pred_original_sample = (alpha_prod_t**0.5) * noisy_sample - (beta_prod_t**0.5) * model_output
-
-        return pred_original_sample
+            if self.scheduler.prediction_type == "v_prediction":
+                return self.scheduler.predict_start_from_v(
+                    x_t=noisy_sample, 
+                    t=timesteps, 
+                    v=model_output
+                )
+            elif self.scheduler.prediction_type == "epsilon":
+                return self.scheduler.predict_start_from_noise(
+                    x_t=noisy_sample, 
+                    t=timesteps, 
+                    noise=model_output
+                )
+            else:
+                raise ValueError(f"Unsupported prediction type: {self.scheduler.prediction_type}")
+        else:
+            alpha_prod_t = self.scheduler.alphas_cumprod[timesteps].view(-1, 1, 1, 1, 1)
+            beta_prod_t = 1 - alpha_prod_t
+    
+            pred_original_sample = (alpha_prod_t**0.5) * noisy_sample - (beta_prod_t**0.5) * model_output
+    
+            return pred_original_sample
 
 
 
@@ -259,7 +275,7 @@ class UNetTrainer:
             cond_loss = ((clean_mean - pred_mean) ** 2).mean()
 
             # Calculate the loss
-            loss = mse_loss + cond_loss * self.cond_loss_scaling
+            loss = mse_loss + cond_loss
 
 
             # Scale the loss by cosine-weighted latitude
@@ -308,23 +324,23 @@ class UNetTrainer:
         )
 
         # Turn the samples into xr datasets
-        gen_ds = self.val_set.convert_tensor_to_xarray(gen_sample[0])
-        val_ds = self.val_set.convert_tensor_to_xarray(clean_samples[0])
+        # gen_ds = self.val_set.convert_tensor_to_xarray(gen_sample[0])
+        # val_ds = self.val_set.convert_tensor_to_xarray(clean_samples[0])
 
         # Create a gif of the samples
-        gen_frames = create_gif(gen_ds)
-        val_frames = create_gif(val_ds)
+        # gen_frames = create_gif(gen_ds)
+        # val_frames = create_gif(val_ds)
 
         # Log the gif to wandb
-        for var, gif in gen_frames.items():
-            self.accelerator.log(
-                {f"Generated {var}": wandb.Video(gif, fps=4)}, step=self.global_step
-            )
+        # for var, gif in gen_frames.items():
+        #     self.accelerator.log(
+        #         {f"Generated {var}": wandb.Video(gif, fps=4)}, step=self.global_step
+        #     )
 
-        for var, gif in val_frames.items():
-            self.accelerator.log(
-                {f"Original {var}": wandb.Video(gif, fps=4)}, step=self.global_step
-            )
+        # for var, gif in val_frames.items():
+        #     self.accelerator.log(
+        #         {f"Original {var}": wandb.Video(gif, fps=4)}, step=self.global_step
+        #     )
 
     def save(self, epoch: int):
         """Saves the state of training to disk."""
