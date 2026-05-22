@@ -133,13 +133,12 @@ def main(config: DictConfig) -> None:
 
     # Grab the Xarray dataset from the dataset object
     xr_ds = dataset.xr_data.load()
-    print(xr_ds)
     # Restrict days to the first 28 days of each month and select years
-    xr_ds = xr_ds.sel(time=xr_ds.time.dt.day.isin(range(1, 29)))
+    xr_ds = xr_ds.sel(time=xr_ds.time.dt.month.isin(range(1, 12)))
     xr_ds = xr_ds.sel(time=slice(str(config.start_year), str(config.end_year)))
 
     batches = create_batches(xr_ds, dataset)
-
+    print(batches)
     dataloader = DataLoader(
         batches, batch_size=config.batch_size, collate_fn=custom_collate_fn
     )
@@ -162,19 +161,16 @@ def main(config: DictConfig) -> None:
                     model=model,
                     disable=True,
                 )
+                print(gen_months)
             else:
                 gen_months = tensor_batch
-
             for i in range(len(gen_months)):
                 gen_samples.append(
                     dataset.convert_tensor_to_xarray(gen_months[i], coords=coords[i])
                 )
-
         gen_samples = accelerator.gather_for_metrics(gen_samples)
         gen_samples = xr.concat(gen_samples, "time").drop_vars("height").sortby("time")
-
         if accelerator.is_main_process:
-
             # If we are generating multiple samples, create a directory for them
             save_name = f"{config.gen_mode}_{config.save_name + '_' if config.save_name is not None else ''}{'_'.join(config.variables)}_{config.start_year}-{config.end_year}.nc"
             save_path = os.path.join(

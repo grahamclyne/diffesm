@@ -368,7 +368,7 @@ class UNetTrainer:
 
         # Make sure to map all tensors to the CPU for consistency
         checkpoint = torch.load(self.load_path, map_location="cpu")
-
+        print('loading checkpoint ', self.load_path)
         # Load trainer variables
         self.global_step = checkpoint["Global Step"]
 

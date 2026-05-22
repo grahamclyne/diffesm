@@ -4,10 +4,11 @@ hyperparameters:
   max_epochs: 10
   sample_every: 500
   save_every: 500
-  batch_size: 1
+  batch_size: 16
   save_dir: checkpoints
-  save_name: ipsl_tas_dcpp.pt
-  load_path: False  # The path to checkpoint to load from
+  save_name: ipsl_tas_dcpp_12_timesteps.pt
+  # load_path: /lustre/fswork/projects/rech/mlr/udy16au/diffesm/checkpoints/ipsl_tas_dcpp_1.pt  # The path to checkpoint to load from
+  load_path: False
   lr: 0.0001
   sample_steps: 250
 
@@ -29,5 +30,5 @@ optimizer:
 accelerator:
   mixed_precision: fp16
   split_batches: False
-  gradient_accumulation_steps: 4
+  gradient_accumulation_steps: 1
   log_with: wandb

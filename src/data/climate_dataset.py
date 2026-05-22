@@ -102,7 +102,6 @@ class ClimateDataset(Dataset):
         """Loads the data from the specified paths and returns it as an xarray Dataset."""
 
         realization_dir = os.path.join(self.data_dir, realization, "*.nc")
-        print(realization_dir)
         # Open up the dataset and make sure it's sorted by time
         dataset = xr.open_mfdataset(realization_dir, combine="by_coords").sortby("time")
 

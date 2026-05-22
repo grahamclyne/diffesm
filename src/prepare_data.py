@@ -19,7 +19,7 @@ class DATA_DICT(TypedDict):
 
 
 # How many chunks to split the data into - this will create NUM_CHUNKS separate files to hold the dat
-NUM_CHUNKS = 40
+NUM_CHUNKS = 120
 
 
 def save_dataset(dataset: xr.Dataset, realization: str, save_dir: str, num_chunks):
@@ -114,9 +114,10 @@ def main(cfg: DictConfig):
 
     # Iterate through each realization in our JSON file
     for realization, realization_data in data["realizations"].items():
-        # if realization in ["r1", "r2"]:
-        #     print(realization)
-        #     continue
+
+        if realization in ["r1"]:
+            print(realization)
+            continue
         # Merge the two variables together
         datasets = [collect_var_data(path_list, load_dir) for path_list in reversed(realization_data.values())]
         datasets[1] = datasets[1].assign_coords({"time" : datasets[0].time})

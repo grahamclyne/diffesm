@@ -7,21 +7,21 @@ defaults:
 # Seed for random number generators
 seed: 0
 samples_per: 1
-load_path: ipsl_tas_dcpp_4.pt
+load_path: /lustre/fswork/projects/rech/mlr/udy16au/diffesm/checkpoints/ipsl_tas_dcpp_12_timesteps_9.pt
 esm: IPSL
 scenario: dcpp
-gen_mode: val  # Either gen/val/test
+gen_mode: gen  # Either gen/val/test
 batch_size: 1
 sample_steps: 250
-start_year: 1961
-end_year: 1971
-variables: [tas,pr]   
+start_year: 1970
+end_year: 1980
+variables: [tas]
 save_name: null  # Only set a save name if you want something special added to your save path
 # spatial_resolution: null
 
 dataset:
   _target_: data.climate_dataset.ClimateDataset
-  seq_len: 120
+  seq_len: 12
 
 accelerator:
   mixed_precision: fp16

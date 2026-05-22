@@ -1,6 +1,6 @@
 shared:
   _target_: data.climate_dataset.ClimateDataset
-  seq_len: 120
+  seq_len: 12
   scenario: dcpp
   esm: IPSL
   vars:
